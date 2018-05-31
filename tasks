@@ -1,4 +1,12 @@
+todo
+----
 recognize a page of a book
 identify the landmarks on the page
 search the db for the current book
 if not in db, add the book to db
+
+notes
+----
+CNN vs Dense
+no of layers
+optimizers
