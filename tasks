@@ -10,8 +10,10 @@ notes
 CNN vs Dense        [x]
 no of layers
 sequence of layers
-optimizers
-visualize
+optimizers          [x]
+visualize           [x]
 data normalization
 save models
 recurrent ANN?
+epoch               [x]
+no of epochs
