@@ -10,6 +10,19 @@ import cv2
 import imutils
 
 
+# automatic canny edge detection
+def auto_canny(image):
+    sigma = 0.33
+    image_median = np.median(image)
+
+    lower_threshold = int(max(0, (1.0 - sigma) * image_median))
+    upper_threshold = int(min(255, (1.0 + sigma) * image_median))
+    
+    edges = cv2.Canny(image, lower_threshold, upper_threshold)
+
+    return edges
+
+
 # find contours, process them
 def process_contours(edges):
     # find contours, sort them into list
@@ -50,7 +63,7 @@ def main():
     pre_image, ratio = preprocess_image(image)
 
     # find edges
-    edges = cv2.Canny(pre_image, 75, 200) # optimize this
+    edges = auto_canny(pre_image)
 
     # find contours of the page
     screen_contours = process_contours(edges)
