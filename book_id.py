@@ -10,18 +10,39 @@ import cv2
 import imutils
 
 
-# order the points for transform
-def order_points(points):
+# transform, thanks to Adrian :D
+def four_point_transform(image, points):
     rectangle = np.zeros((4, 2), dtype = 'float32')
-    sum_of_points = pts.sum(axis = 1)
+    sum_of_points = points.sum(axis = 1)
     rectangle[0] = points[np.argmin(sum_of_points)]
     rectangle[2] = points[np.argmax(sum_of_points)]
 
     difference = np.diff(points, axis = 1)
     rectangle[1] = points[np.argmin(difference)]
     rectangle[3] = points[np.argmax(difference)]
+    (tl, tr, br, bl) = rectangle
 
-    return rectangle
+    width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    max_width = max(int(width_a), int(width_b))
+
+    height_a = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    height_b = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    max_height = max(int(height_a), int(height_b))
+
+    destination_points = np.array([
+        [0, 0],
+        [max_width - 1, 0],
+        [max_width - 1, max_height - 1],
+        [0, max_height - 1]], dtype = 'float32')
+
+    transform_matrix = cv2.getPerspectiveTransform(rectangle,
+        destination_points)
+    
+    warped_image = cv2.warpPerspective(image, transform_matrix,
+        (max_width, max_height))
+
+    return warped_image
 
 
 # automatic canny edge detection
@@ -82,14 +103,12 @@ def main():
     # find contours of the page
     screen_contours = process_contours(edges)
 
-    # debug
-    out_image = cv2.cvtColor(pre_image, cv2.COLOR_GRAY2BGR)
-    cv2.drawContours(out_image, [screen_contours], -1, (0, 255, 0), 2)
-    cv2.imshow('Outline', out_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    exit(0)
+    # transform the image
+    warped_image = four_point_transform(image,
+        screen_contours.reshape(4, 2) * ratio)
 
+    # write the image
+    cv2.imwrite('output.jpg', warped_image)
 
 # call the main function
 main()
