@@ -10,6 +10,20 @@ import cv2
 import imutils
 
 
+# order the points for transform
+def order_points(points):
+    rectangle = np.zeros((4, 2), dtype = 'float32')
+    sum_of_points = pts.sum(axis = 1)
+    rectangle[0] = points[np.argmin(sum_of_points)]
+    rectangle[2] = points[np.argmax(sum_of_points)]
+
+    difference = np.diff(points, axis = 1)
+    rectangle[1] = points[np.argmin(difference)]
+    rectangle[3] = points[np.argmax(difference)]
+
+    return rectangle
+
+
 # automatic canny edge detection
 def auto_canny(image):
     sigma = 0.33
