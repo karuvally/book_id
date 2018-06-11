@@ -9,6 +9,10 @@ import argparse
 import cv2
 import imutils
 
+from scipy.spatial import distance as dist
+from imutils import perspective
+from imutils import contours
+
 
 # transform, thanks to Adrian :D
 def four_point_transform(image, points):
@@ -63,7 +67,7 @@ def process_contours(edges):
     # find contours, sort them into list
     contours = cv2.findContours(edges.copy(), cv2.RETR_LIST,
         cv2.CHAIN_APPROX_SIMPLE)
-    contours = contours[0] if imutils.is_cv2() else contours[1]
+    contours = contours[1]
     contours = sorted(contours, key = cv2.contourArea, reverse = True)[:5]
 
     for contour in contours:
@@ -87,6 +91,9 @@ def preprocess_image(image):
 
 # the main function
 def main():
+    # essential variables
+    reference_object = None
+
     # manage runtime arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--image', required = True,
@@ -107,8 +114,38 @@ def main():
     warped_image = four_point_transform(image,
         screen_contours.reshape(4, 2) * ratio)
 
-    # write the image
-    cv2.imwrite('output.jpg', warped_image)
+    # write the transformed image (debug)
+    # cv2.imwrite('output.jpg', warped_image)
+
+    # preprocess image for landmark detection
+    landmark_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+    landmark_image = cv2.GaussianBlur(landmark_image, (7, 7), 0)
+
+    # edge detection
+    landmark_edges = auto_canny(landmark_image)
+    landmark_edges = cv2.dilate(landmark_edges, None, iterations = 1)
+    landmark_edges = cv2.erode(landmark_edges, None, iterations = 1)
+
+    # find, sort contours
+    mark_contours = cv2.findContours(landmark_edges.copy(), cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)
+    
+    mark_contours = contours[1]
+    (mark_contours, _) = contours.sort_contours(mark_contours)
+
+    # loop over contours 
+    for contour in mark_contours:
+        if cv2.contourArea(contour) < 100: # tweak this value
+            continue
+
+        # compute bounding boxes
+        bounding_box = cv2.minAreaRect(contour)
+        bounding_box = cv2.boxPoints(bounding_box)
+        bounding_box = np.array(bounding_box, dtype='int')
+        
+        bounding_box = perspective.order_points(bounding_box)
+        center_x = np.average(bounding_box[:, 0])
+        center_y = np.average(bounding_box[:, 1])
 
 # call the main function
 main()

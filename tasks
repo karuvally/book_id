@@ -5,6 +5,17 @@ identify the landmarks on the page
 search the db for the current book
 if not in db, add the book to db
 
+identify landmarks
+----
+ignore landmarks which are very small
+store number of landmarks
+find boundary points of each landmark
+for entry in database:
+    if entry[no_of_landmarks] >= current_no_of_landmarks:
+        compare points with that in database
+    else
+        continue
+
 notes
 ----
 CNN vs Dense        [x]
