@@ -3,7 +3,6 @@
 # Copyright 2018, Dextro Labs
 
 # import the essential stuff
-from skimage.filters import threshold_local
 import numpy as np
 import argparse
 import cv2
@@ -12,6 +11,13 @@ import imutils
 from scipy.spatial import distance as dist
 from imutils import perspective
 from imutils import contours
+
+
+# display image for debugging
+def display_image(image):
+    cv2.imshow('Output', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 # transform, thanks to Adrian :D
@@ -92,7 +98,7 @@ def preprocess_image(image):
 # the main function
 def main():
     # essential variables
-    reference_object = None
+    distance_list = []
 
     # manage runtime arguments
     parser = argparse.ArgumentParser()
@@ -121,7 +127,7 @@ def main():
     landmark_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
     landmark_image = cv2.GaussianBlur(landmark_image, (7, 7), 0)
 
-    # edge detection
+    # detect edges, remove gaps between edges
     landmark_edges = auto_canny(landmark_image)
     landmark_edges = cv2.dilate(landmark_edges, None, iterations = 1)
     landmark_edges = cv2.erode(landmark_edges, None, iterations = 1)
@@ -130,7 +136,8 @@ def main():
     mark_contours = cv2.findContours(landmark_edges.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
     
-    mark_contours = contours[1]
+    mark_contours = mark_contours[1]
+
     (mark_contours, _) = contours.sort_contours(mark_contours)
 
     # loop over contours 
@@ -138,14 +145,18 @@ def main():
         if cv2.contourArea(contour) < 100: # tweak this value
             continue
 
-        # compute bounding boxes
+        # finds points for bounding box over landmarks
         bounding_box = cv2.minAreaRect(contour)
         bounding_box = cv2.boxPoints(bounding_box)
         bounding_box = np.array(bounding_box, dtype='int')
-        
         bounding_box = perspective.order_points(bounding_box)
-        center_x = np.average(bounding_box[:, 0])
-        center_y = np.average(bounding_box[:, 1])
+        tl = bounding_box[0]
+
+        # distance between top-left corner and landmark
+        distance_list.append(int(dist.euclidean((0, 0), (tl[0], tl[1]))))
+
+    print(distance_list) # debug
+        
 
 # call the main function
 main()
