@@ -120,17 +120,16 @@ def main():
     warped_image = four_point_transform(image,
         screen_contours.reshape(4, 2) * ratio)
 
-    # write the transformed image (debug)
-    # cv2.imwrite('output.jpg', warped_image)
-
     # preprocess image for landmark detection
     landmark_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
     landmark_image = cv2.GaussianBlur(landmark_image, (7, 7), 0)
 
     # detect edges, remove gaps between edges
     landmark_edges = auto_canny(landmark_image)
-    landmark_edges = cv2.dilate(landmark_edges, None, iterations = 1)
-    landmark_edges = cv2.erode(landmark_edges, None, iterations = 1)
+    landmark_edges = cv2.dilate(landmark_edges, None, iterations = 5)
+    landmark_edges = cv2.erode(landmark_edges, None, iterations = 5)
+
+    cv2.imwrite('output.jpg', landmark_edges) # debug
 
     # find, sort contours
     mark_contours = cv2.findContours(landmark_edges.copy(), cv2.RETR_EXTERNAL,
@@ -145,8 +144,17 @@ def main():
         if cv2.contourArea(contour) < 100: # tweak this value
             continue
 
-        # finds points for bounding box over landmarks
+        # finds rectangle covering the landmark
         bounding_box = cv2.minAreaRect(contour)
+
+        # remove artifact straight lines
+        (points, dimension, angle) = bounding_box
+        if dimension[0] or dimension[1] < 7: # tweak this value
+            if points[0] or points[1] < 3: # tweak this value
+                if abs(angle) < 5: # tweak this value
+                    continue
+
+        # points for bounding box from rectangle
         bounding_box = cv2.boxPoints(bounding_box)
         bounding_box = np.array(bounding_box, dtype='int')
         bounding_box = perspective.order_points(bounding_box)
@@ -155,7 +163,8 @@ def main():
         # distance between top-left corner and landmark
         distance_list.append(int(dist.euclidean((0, 0), (tl[0], tl[1]))))
 
-    print(distance_list) # debug
+    print('points   :', distance_list) # debug
+    print('count    :', len(distance_list)) # debug
         
 
 # call the main function
