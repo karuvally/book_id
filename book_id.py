@@ -2,6 +2,9 @@
 # Book ID, alpha release
 # Copyright 2018, Dextro Labs
 
+# TODO
+# Better edge detection
+
 # import the essential stuff
 import numpy as np
 import argparse
@@ -112,6 +115,8 @@ def main():
 
     # find edges
     edges = auto_canny(pre_image)
+
+    cv2.imwrite('edges.jpg', edges) # debug
 
     # find contours of the page
     screen_contours = process_contours(edges)
