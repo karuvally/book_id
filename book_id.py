@@ -3,7 +3,8 @@
 # Copyright 2018, Dextro Labs
 
 # TODO
-# Better edge detection
+# Try normal cannny edge
+# Other edge detection algorithms
 
 # import the essential stuff
 import numpy as np
@@ -60,7 +61,7 @@ def four_point_transform(image, points):
 
 # automatic canny edge detection
 def auto_canny(image):
-    sigma = 0.33
+    sigma = 0.50 # tweak this, default = 0.33
     image_median = np.median(image)
 
     lower_threshold = int(max(0, (1.0 - sigma) * image_median))
@@ -94,6 +95,9 @@ def preprocess_image(image):
 
     image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
     image = cv2.GaussianBlur(image, (5, 5), 0)
+
+    # convert image to binary
+    #_, image = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
 
     return image, ratio
 
