@@ -28,3 +28,13 @@ save models
 recurrent ANN?
 epoch               [x]
 no of epochs
+
+continuosly learning Neural Net
+----
+Train neural network to find page edges
+Run the neural network on the phone app
+Neural network finds the page edges
+If not accurate, the user can correct the edges
+Correction is used for more training
+H5Py to the rescue :D
+Eventually, we get very accurate neural network
